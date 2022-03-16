@@ -19,8 +19,7 @@ class Nominees extends StatefulWidget {
 
 class _NomineesState extends State<Nominees> {
   final NomineeRepository _nomineeRepository = NomineeRepository();
-  final TextEditingController _nomineeSearchController =
-      TextEditingController();
+  final TextEditingController _nomineeSearchController = TextEditingController();
 
   late Future myFuture;
   List<Nominee> filteredNominees = [];
@@ -29,6 +28,12 @@ class _NomineesState extends State<Nominees> {
   void initState() {
     myFuture = getNominees();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _nomineeSearchController.dispose();
   }
 
   Future<List<Nominee>> getNominees() async {
@@ -101,7 +106,7 @@ class _NomineesState extends State<Nominees> {
             if (snapshot.hasData) {
               return Padding(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const ScrollPhysics(),
@@ -115,7 +120,7 @@ class _NomineesState extends State<Nominees> {
                       ? filteredNominees.length
                       : snapshot.data.length,
                   separatorBuilder: (BuildContext context, int i) =>
-                      const Divider(),
+                  const Divider(),
                 ),
               );
             }

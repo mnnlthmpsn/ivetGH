@@ -19,8 +19,7 @@ class Categories extends StatefulWidget {
 
 class _CategoriesState extends State<Categories> {
   final CategoryRepository _categoryRepository = CategoryRepository();
-  final TextEditingController _categorySearchController =
-      TextEditingController();
+  final TextEditingController _categorySearchController = TextEditingController();
   late Future myFuture;
   List<Category> filteredCategories = [];
 
@@ -29,6 +28,12 @@ class _CategoriesState extends State<Categories> {
     // TODO: implement initState
     super.initState();
     myFuture = getCategories();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _categorySearchController.dispose();
   }
 
   Future<List<Category>> getCategories() async =>

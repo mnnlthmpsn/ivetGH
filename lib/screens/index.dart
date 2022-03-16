@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +10,7 @@ import 'package:vetgh/components/loader.dart';
 import 'package:vetgh/config.dart';
 import 'package:vetgh/models/event.dart';
 import 'package:vetgh/repositories/event.dart';
+import 'package:vetgh/screens/categories.dart';
 
 class Index extends StatefulWidget {
   const Index({Key? key}) : super(key: key);
@@ -20,8 +23,10 @@ class _IndexState extends State<Index> {
   final EventRepository _eventRepository = EventRepository();
 
   late Future myFuture;
-  List<Event> filteredEvents = [];
   final TextEditingController _eventSearchController = TextEditingController();
+
+  List<Event> filteredEvents = [];
+  List<Event> randomEvents = [];
 
   @override
   void initState() {
@@ -30,6 +35,24 @@ class _IndexState extends State<Index> {
 
     //  get events
     myFuture = getEvents();
+
+    //  get random events for slide
+    getRandomEvents();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _eventSearchController.dispose();
+  }
+
+  void getRandomEvents() async {
+    List<Event> allEvents = await getEvents();
+    setState(() {
+      randomEvents = allEvents.length > 6
+          ? allEvents.skip(3).take(3).toList()
+          : allEvents.take(3).toList();
+    });
   }
 
   searchEvent(String value) async {
@@ -137,9 +160,49 @@ class _IndexState extends State<Index> {
     return Builder(
       builder: (BuildContext context) {
         return CarouselSlider(
-            items: [1, 2, 3].map((item) {
+            items: randomEvents.map((Event event) {
               return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 height: MediaQuery.of(context).size.height * .1,
+                width: double.infinity,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (BuildContext context) =>
+                                Categories(event: event)));
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.image,
+                        color: Colors.white,
+                        size: 60,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            event.award!,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                          Text(
+                            event.entityName != null
+                                ? event.entityName!
+                                : 'VetGH',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ),
                 decoration: BoxDecoration(
                     color: KColors.kPrimaryColor,
                     borderRadius: BorderRadius.circular(10)),

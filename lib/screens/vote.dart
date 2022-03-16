@@ -110,7 +110,7 @@ class _VoteState extends State<Vote> {
 
                             if (snapshot.hasData) {
                               return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   _awardNomineeDetails(),
                                   const SizedBox(height: 25),
@@ -145,9 +145,20 @@ class _VoteState extends State<Vote> {
   Widget _awardNomineeDetails() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         widget.nominee.nomPic != null
-            ? Image.network(widget.nominee.nomPic!)
+            ? Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                width: MediaQuery.of(context).size.height * .3,
+                height: MediaQuery.of(context).size.height * .3,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter,
+                        image: NetworkImage(widget.nominee.nomPic!))),
+              )
             : Icon(
                 Icons.person_pin,
                 color: KColors.kDarkColor.withOpacity(.2),
