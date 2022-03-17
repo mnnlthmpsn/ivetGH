@@ -38,4 +38,17 @@ class EventRepository {
     var response = jsonDecode(res.body);
     return response;
   }
+
+  Future sendMessage(message) async {
+    var headers = {"Content-Type": "application/json;charset=UTF-8"};
+
+    var encode = json.encode(message);
+
+    dynamic res = await http.post(Uri.parse('$url/req_contact_us'),
+        headers: headers, body: encode);
+
+    var response = jsonDecode(res.body);
+    print(response);
+    return response;
+  }
 }

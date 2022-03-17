@@ -5,6 +5,7 @@ import 'package:vetgh/config.dart';
 import 'package:vetgh/screens/categories.dart';
 import 'package:vetgh/screens/home.dart';
 import 'package:vetgh/screens/nominees.dart';
+import 'package:vetgh/screens/splashScreen.dart';
 import 'package:vetgh/screens/vote.dart';
 
 void main() {
@@ -32,8 +33,10 @@ class MyApp extends StatelessWidget {
         colorScheme:
             ColorScheme.fromSwatch().copyWith(secondary: KColors.kLightColor),
       ),
+      initialRoute: '/',
       routes: {
-        '/': (context) => const Home(),
+        '/': (context) => const SplashScreen(),
+        'home': (context) => const Home(),
       },
     );
   }

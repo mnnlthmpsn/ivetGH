@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class KColors {
-  static Color kPrimaryColor = Color(0xFFEC6144);
-  static Color kDarkColor = Color(0xFF222F3E);
-  static Color kLightColor = Color(0xFFE5E5E5);
+  static Color kPrimaryColor = const Color(0xFF5A37E0);
+  static Color kDarkColor = const Color(0xFF222F3E);
+  static Color kLightColor = const Color(0xFFE5E5E5);
 }
 
 class KTextTheme {
