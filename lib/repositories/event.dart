@@ -1,17 +1,18 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/retry.dart';
+import 'package:vetgh/helpers.dart';
 import 'package:vetgh/models/event.dart';
 import 'package:http/http.dart' as http;
 
 class EventRepository {
   String url = 'https://api.vetgh.com';
-  final client = RetryClient(http.Client());
 
   Future<List<Event>> getEvents() async {
-    var headers = {"Content-Type": "application/json;charset=UTF-8"};
-
     try {
+      var headers = {"Content-Type": "application/json;charset=UTF-8"};
+
       dynamic res =
           await http.get(Uri.parse('$url/get_awards'), headers: headers);
 
@@ -20,10 +21,9 @@ class EventRepository {
           .toList();
 
       return events;
-    } catch (e) {
+    }
+    catch (e) {
       rethrow;
-    } finally {
-      client.close();
     }
   }
 

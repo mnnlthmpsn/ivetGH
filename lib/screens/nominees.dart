@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:vetgh/components/error.dart';
 import 'package:vetgh/components/kInput.dart';
@@ -20,15 +22,9 @@ class Nominees extends StatefulWidget {
 class _NomineesState extends State<Nominees> {
   final NomineeRepository _nomineeRepository = NomineeRepository();
   final TextEditingController _nomineeSearchController = TextEditingController();
-
-  late Future myFuture;
   List<Nominee> filteredNominees = [];
 
-  @override
-  void initState() {
-    myFuture = getNominees();
-    super.initState();
-  }
+  String errorMessage = "";
 
   @override
   void dispose() {
@@ -37,7 +33,19 @@ class _NomineesState extends State<Nominees> {
   }
 
   Future<List<Nominee>> getNominees() async {
-    return await _nomineeRepository.getNominees(widget.category.catId!);
+    try {
+      return await _nomineeRepository.getNominees(widget.category.catId!);
+    } catch (e) {
+      setState(() {
+        if (e is SocketException) {
+          errorMessage = "Network error occurred. Please check your connectivity";
+        }
+        else {
+          errorMessage = e.toString();
+        }
+      });
+      rethrow;
+    }
   }
 
   searchNominee(String value) async {
@@ -65,12 +73,8 @@ class _NomineesState extends State<Nominees> {
             style: const TextStyle(fontSize: 14),
           ),
         ),
-        body: RefreshIndicator(
-          color: KColors.kPrimaryColor,
-          onRefresh: () => getNominees(),
-          child: CustomScrollView(
-            slivers: [_appBar(), _body()],
-          ),
+        body: CustomScrollView(
+          slivers: [_appBar(), _body()],
         ));
   }
 
@@ -97,8 +101,13 @@ class _NomineesState extends State<Nominees> {
     return SliverList(
         delegate: SliverChildListDelegate([
       FutureBuilder(
-          future: myFuture,
+          future: getNominees(),
           builder: (BuildContext context, AsyncSnapshot snapshot) {
+
+            if (snapshot.hasError) {
+              return KError(errorMsg: errorMessage);
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const KLoader();
             }
@@ -125,7 +134,7 @@ class _NomineesState extends State<Nominees> {
               );
             }
 
-            return const KError();
+            return const KError(errorMsg: "Error here",);
           })
     ]));
   }

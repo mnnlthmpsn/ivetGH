@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:vetgh/components/error.dart';
 import 'package:vetgh/components/loader.dart';
@@ -17,7 +19,6 @@ class Vote extends StatefulWidget {
 }
 
 class _VoteState extends State<Vote> {
-  late Future myFuture;
   final NomineeRepository _nomineeRepository = NomineeRepository();
   final _formKey = GlobalKey<FormState>();
 
@@ -30,15 +31,21 @@ class _VoteState extends State<Vote> {
   final EventRepository _eventRepository = EventRepository();
   bool isLoading = false;
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    myFuture = getEventPaymentDetails();
-  }
+  String errorMessage = "";
 
   getEventPaymentDetails() async {
-    return _nomineeRepository.getPaymentDetails(widget.nominee.nomCode!);
+    try {
+      return _nomineeRepository.getPaymentDetails(widget.nominee.nomCode!);
+    } catch (e) {
+      setState(() {
+        if (e is SocketException) {
+          errorMessage =
+              "Network error occurred. Please check your connectivity";
+        } else {
+          errorMessage = e.toString();
+        }
+      });
+    }
   }
 
   vote(paymentInfo) async {
@@ -100,9 +107,14 @@ class _VoteState extends State<Vote> {
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: FutureBuilder(
-                          future: myFuture,
+                          future: getEventPaymentDetails(),
                           builder:
                               (BuildContext context, AsyncSnapshot snapshot) {
+
+                            if (snapshot.hasError) {
+                              return KError(errorMsg: errorMessage);
+                            }
+
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const KLoader();
@@ -119,7 +131,7 @@ class _VoteState extends State<Vote> {
                               );
                             }
 
-                            return const KError();
+                            return const KError(errorMsg: "sorry");
                           }),
                     )
                   ]),

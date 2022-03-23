@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
@@ -8,9 +9,11 @@ import 'package:vetgh/components/eventCard.dart';
 import 'package:vetgh/components/kInput.dart';
 import 'package:vetgh/components/loader.dart';
 import 'package:vetgh/config.dart';
+import 'package:vetgh/helpers.dart';
 import 'package:vetgh/models/event.dart';
 import 'package:vetgh/repositories/event.dart';
 import 'package:vetgh/screens/categories.dart';
+import 'package:vetgh/screens/home.dart';
 
 class Index extends StatefulWidget {
   const Index({Key? key}) : super(key: key);
@@ -21,38 +24,23 @@ class Index extends StatefulWidget {
 
 class _IndexState extends State<Index> {
   final EventRepository _eventRepository = EventRepository();
+  String errorMessage = "";
 
   late Future myFuture;
   final TextEditingController _eventSearchController = TextEditingController();
 
   List<Event> filteredEvents = [];
-  List<Event> randomEvents = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
-    //  get events
-    myFuture = getEvents();
-
-    //  get random events for slide
-    getRandomEvents();
   }
 
   @override
   void dispose() {
     super.dispose();
     _eventSearchController.dispose();
-  }
-
-  void getRandomEvents() async {
-    List<Event> allEvents = await getEvents();
-    setState(() {
-      randomEvents = allEvents.length > 6
-          ? allEvents.skip(3).take(3).toList()
-          : allEvents.take(3).toList();
-    });
   }
 
   searchEvent(String value) async {
@@ -67,7 +55,18 @@ class _IndexState extends State<Index> {
   }
 
   Future<List<Event>> getEvents() async {
-    return await _eventRepository.getEvents();
+    try {
+      return await _eventRepository.getEvents();
+    } catch (e) {
+      setState(() {
+        if (e is SocketException) {
+          errorMessage = "Network Error occurred. Please check your connectivity";
+        } else {
+          errorMessage = e.toString();
+        }
+      });
+      rethrow;
+    }
   }
 
   @override
@@ -79,9 +78,9 @@ class _IndexState extends State<Index> {
   }
 
   Widget _body() {
-    return RefreshIndicator(
-      color: KColors.kPrimaryColor,
-      onRefresh: () => getEvents(),
+    return SizedBox(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
       child: CustomScrollView(
         slivers: [_appBar(), _futureBuilder()],
       ),
@@ -93,19 +92,29 @@ class _IndexState extends State<Index> {
     return SliverList(
         delegate: SliverChildListDelegate([
       FutureBuilder(
-        future: myFuture,
+        future: getEvents(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasError) {
+            return Column(
+              children: [
+                KError(errorMsg: errorMessage),
+              ],
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const KLoader();
           }
 
           if (snapshot.hasData) {
             return Column(
-              children: [_carousel(), _events(snapshot)],
+              children: [
+                _carousel(snapshot.data),
+                _events(snapshot)
+              ],
             );
           }
-
-          return const KError();
+          return const Center(child: Text('An error occurred'));
         },
       )
     ]));
@@ -156,11 +165,11 @@ class _IndexState extends State<Index> {
   }
 
   //  carousel
-  Widget _carousel() {
+  Widget _carousel(List<Event> events) {
     return Builder(
       builder: (BuildContext context) {
         return CarouselSlider(
-            items: randomEvents.map((Event event) {
+            items: events.map((Event event) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 height: MediaQuery.of(context).size.height * .1,
@@ -182,23 +191,25 @@ class _IndexState extends State<Index> {
                         color: Colors.white,
                         size: 60,
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            event.award!,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            event.entityName != null
-                                ? event.entityName!
-                                : 'VetGH',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          )
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              event.award!,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            Text(
+                              event.entityName != null
+                                  ? event.entityName!
+                                  : 'VetGH',
+                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                            )
+                          ],
+                        ),
                       )
                     ],
                   ),
