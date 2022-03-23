@@ -22,6 +22,8 @@ class _VoteState extends State<Vote> {
   final NomineeRepository _nomineeRepository = NomineeRepository();
   final _formKey = GlobalKey<FormState>();
 
+  late Future myFuture;
+
   // controllers
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -32,6 +34,12 @@ class _VoteState extends State<Vote> {
   bool isLoading = false;
 
   String errorMessage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    myFuture = getEventPaymentDetails();
+  }
 
   getEventPaymentDetails() async {
     try {
@@ -107,7 +115,7 @@ class _VoteState extends State<Vote> {
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: FutureBuilder(
-                          future: getEventPaymentDetails(),
+                          future: myFuture,
                           builder:
                               (BuildContext context, AsyncSnapshot snapshot) {
 

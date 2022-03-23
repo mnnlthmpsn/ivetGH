@@ -22,10 +22,20 @@ class Categories extends StatefulWidget {
 
 class _CategoriesState extends State<Categories> {
   final CategoryRepository _categoryRepository = CategoryRepository();
-  final TextEditingController _categorySearchController = TextEditingController();
+  final TextEditingController _categorySearchController =
+      TextEditingController();
   List<Category> filteredCategories = [];
 
+  late Future myFuture;
+  List<Category> allCategories = [];
   String errorMessage = "";
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    myFuture = getCategories();
+  }
 
   @override
   void dispose() {
@@ -35,13 +45,16 @@ class _CategoriesState extends State<Categories> {
 
   Future<List<Category>> getCategories() async {
     try {
-      return await _categoryRepository.getCategories(widget.event.planId!);
+      List<Category> categories =
+          await _categoryRepository.getCategories(widget.event.planId!);
+      setState(() => allCategories = categories);
+      return categories;
     } catch (e) {
       setState(() {
         if (e is SocketException) {
-          setState(() => errorMessage = "Network error occurred. Please check your connectivity");
-        }
-        else {
+          setState(() => errorMessage =
+              "Network error occurred. Please check your connectivity");
+        } else {
           setState(() => errorMessage = e.toString());
         }
       });
@@ -49,10 +62,8 @@ class _CategoriesState extends State<Categories> {
     }
   }
 
-
   searchCategory(String value) async {
     String text = value.toLowerCase();
-    List<Category> allCategories = await getCategories();
     setState(() {
       filteredCategories = allCategories.where((catg) {
         var category = catg.category?.toLowerCase();
@@ -75,70 +86,77 @@ class _CategoriesState extends State<Categories> {
             style: const TextStyle(fontSize: 14),
           ),
         ),
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              backgroundColor: KColors.kPrimaryColor,
-              foregroundColor: Colors.white,
-              automaticallyImplyLeading: false,
-              pinned: true,
-              floating: true,
-              toolbarHeight: MediaQuery.of(context).size.height * .15,
-              flexibleSpace: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: KInput(
-                  label: 'Search Categories',
-                  controller: _categorySearchController,
-                  onChanged: (value) => searchCategory(value),
-                ),
-              ),
-            ),
-            SliverPadding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    FutureBuilder(
-                        future: getCategories(),
-                        builder:
-                            (BuildContext context, AsyncSnapshot snapshot) {
-                          if (snapshot.hasError) {
-                            return KError(errorMsg: errorMessage);
-                          }
-
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const KLoader();
-                          }
-
-                          if (snapshot.hasData) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20.0, vertical: 10),
-                              child: ListView.separated(
-                                shrinkWrap: true,
-                                physics: const ScrollPhysics(),
-                                itemBuilder: (BuildContext context, int i) {
-                                  return CategoryCard(
-                                      category: filteredCategories.isNotEmpty
-                                          ? filteredCategories[i]
-                                          : snapshot.data[i]);
-                                },
-                                itemCount: filteredCategories.isNotEmpty
-                                    ? filteredCategories.length
-                                    : snapshot.data.length,
-                                separatorBuilder:
-                                    (BuildContext context, int i) =>
-                                        const Divider(),
-                              ),
-                            );
-                          }
-
-                          return const KError(errorMsg: "error here",);
-                        })
-                  ]),
-                )),
-          ],
+        body: RefreshIndicator(
+          color: KColors.kPrimaryColor,
+          onRefresh: () => Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (BuildContext context) => widget)),
+          child: _body(),
         ));
+  }
+
+  Widget _body() {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          backgroundColor: KColors.kPrimaryColor,
+          foregroundColor: Colors.white,
+          automaticallyImplyLeading: false,
+          pinned: true,
+          floating: true,
+          toolbarHeight: MediaQuery.of(context).size.height * .15,
+          flexibleSpace: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: KInput(
+              label: 'Search Categories',
+              controller: _categorySearchController,
+              onChanged: (value) => searchCategory(value),
+            ),
+          ),
+        ),
+        SliverPadding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                FutureBuilder(
+                    future: myFuture,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasError) {
+                        return KError(errorMsg: errorMessage);
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const KLoader();
+                      }
+
+                      if (snapshot.hasData) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 10),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            physics: const ScrollPhysics(),
+                            itemBuilder: (BuildContext context, int i) {
+                              return CategoryCard(
+                                  category: filteredCategories.isNotEmpty
+                                      ? filteredCategories[i]
+                                      : snapshot.data[i]);
+                            },
+                            itemCount: filteredCategories.isNotEmpty
+                                ? filteredCategories.length
+                                : snapshot.data.length,
+                            separatorBuilder: (BuildContext context, int i) =>
+                                const Divider(),
+                          ),
+                        );
+                      }
+
+                      return const KError(
+                        errorMsg: "error here",
+                      );
+                    })
+              ]),
+            )),
+      ],
+    );
   }
 }

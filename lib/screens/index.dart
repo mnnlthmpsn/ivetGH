@@ -30,11 +30,14 @@ class _IndexState extends State<Index> {
   final TextEditingController _eventSearchController = TextEditingController();
 
   List<Event> filteredEvents = [];
+  List<Event> allEvents = [];
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+
+    myFuture = getEvents();
   }
 
   @override
@@ -45,7 +48,6 @@ class _IndexState extends State<Index> {
 
   searchEvent(String value) async {
     String text = value.toLowerCase();
-    List<Event> allEvents = await getEvents();
     setState(() {
       filteredEvents = allEvents.where((event) {
         var eventTitle = event.award?.toLowerCase();
@@ -56,11 +58,14 @@ class _IndexState extends State<Index> {
 
   Future<List<Event>> getEvents() async {
     try {
-      return await _eventRepository.getEvents();
+      List<Event> res = await _eventRepository.getEvents();
+      setState(() => allEvents = res);
+      return res;
     } catch (e) {
       setState(() {
         if (e is SocketException) {
-          errorMessage = "Network Error occurred. Please check your connectivity";
+          errorMessage =
+              "Network Error occurred. Please check your connectivity";
         } else {
           errorMessage = e.toString();
         }
@@ -73,7 +78,12 @@ class _IndexState extends State<Index> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: _body(),
+      body: RefreshIndicator(
+        color: KColors.kPrimaryColor,
+        onRefresh: () => Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (BuildContext context) => const Home())),
+        child: _body(),
+      ),
     );
   }
 
@@ -92,7 +102,7 @@ class _IndexState extends State<Index> {
     return SliverList(
         delegate: SliverChildListDelegate([
       FutureBuilder(
-        future: getEvents(),
+        future: myFuture,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasError) {
             return Column(
@@ -108,10 +118,7 @@ class _IndexState extends State<Index> {
 
           if (snapshot.hasData) {
             return Column(
-              children: [
-                _carousel(snapshot.data),
-                _events(snapshot)
-              ],
+              children: [_carousel(snapshot.data), _events(snapshot)],
             );
           }
           return const Center(child: Text('An error occurred'));
@@ -206,7 +213,8 @@ class _IndexState extends State<Index> {
                               event.entityName != null
                                   ? event.entityName!
                                   : 'VetGH',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 12),
                             )
                           ],
                         ),

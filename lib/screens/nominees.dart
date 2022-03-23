@@ -21,10 +21,19 @@ class Nominees extends StatefulWidget {
 
 class _NomineesState extends State<Nominees> {
   final NomineeRepository _nomineeRepository = NomineeRepository();
-  final TextEditingController _nomineeSearchController = TextEditingController();
+  final TextEditingController _nomineeSearchController =
+      TextEditingController();
   List<Nominee> filteredNominees = [];
 
   String errorMessage = "";
+  late Future myFuture;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    myFuture = getNominees();
+  }
 
   @override
   void dispose() {
@@ -38,9 +47,9 @@ class _NomineesState extends State<Nominees> {
     } catch (e) {
       setState(() {
         if (e is SocketException) {
-          errorMessage = "Network error occurred. Please check your connectivity";
-        }
-        else {
+          errorMessage =
+              "Network error occurred. Please check your connectivity";
+        } else {
           errorMessage = e.toString();
         }
       });
@@ -73,8 +82,13 @@ class _NomineesState extends State<Nominees> {
             style: const TextStyle(fontSize: 14),
           ),
         ),
-        body: CustomScrollView(
-          slivers: [_appBar(), _body()],
+        body: RefreshIndicator(
+          color: KColors.kPrimaryColor,
+          onRefresh: () => Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (BuildContext context) => widget)),
+          child: CustomScrollView(
+            slivers: [_appBar(), _body()],
+          ),
         ));
   }
 
@@ -101,9 +115,8 @@ class _NomineesState extends State<Nominees> {
     return SliverList(
         delegate: SliverChildListDelegate([
       FutureBuilder(
-          future: getNominees(),
+          future: myFuture,
           builder: (BuildContext context, AsyncSnapshot snapshot) {
-
             if (snapshot.hasError) {
               return KError(errorMsg: errorMessage);
             }
@@ -115,7 +128,7 @@ class _NomineesState extends State<Nominees> {
             if (snapshot.hasData) {
               return Padding(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const ScrollPhysics(),
@@ -129,12 +142,14 @@ class _NomineesState extends State<Nominees> {
                       ? filteredNominees.length
                       : snapshot.data.length,
                   separatorBuilder: (BuildContext context, int i) =>
-                  const Divider(),
+                      const Divider(),
                 ),
               );
             }
 
-            return const KError(errorMsg: "Error here",);
+            return const KError(
+              errorMsg: "Error here",
+            );
           })
     ]));
   }
