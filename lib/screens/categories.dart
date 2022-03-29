@@ -137,6 +137,7 @@ class _CategoriesState extends State<Categories> {
                             physics: const ScrollPhysics(),
                             itemBuilder: (BuildContext context, int i) {
                               return CategoryCard(
+                                event: widget.event,
                                   category: filteredCategories.isNotEmpty
                                       ? filteredCategories[i]
                                       : snapshot.data[i]);

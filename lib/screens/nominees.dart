@@ -1,19 +1,26 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:vetgh/components/barGraph.dart';
 import 'package:vetgh/components/error.dart';
 import 'package:vetgh/components/kInput.dart';
 import 'package:vetgh/components/loader.dart';
 import 'package:vetgh/components/nomineeCard.dart';
 import 'package:vetgh/config.dart';
+import 'package:vetgh/helpers.dart';
 import 'package:vetgh/models/category.dart';
+import 'package:vetgh/models/event.dart';
 import 'package:vetgh/models/nominee.dart';
+import 'package:vetgh/repositories/category.dart';
 import 'package:vetgh/repositories/nominee.dart';
+import 'package:vetgh/screens/resultPage.dart';
 
 class Nominees extends StatefulWidget {
   final Category category;
+  final Event event;
 
-  const Nominees({Key? key, required this.category}) : super(key: key);
+  const Nominees({Key? key, required this.category, required this.event})
+      : super(key: key);
 
   @override
   State<Nominees> createState() => _NomineesState();
@@ -21,18 +28,22 @@ class Nominees extends StatefulWidget {
 
 class _NomineesState extends State<Nominees> {
   final NomineeRepository _nomineeRepository = NomineeRepository();
+  final CategoryRepository _categoryRepository = CategoryRepository();
+
   final TextEditingController _nomineeSearchController =
       TextEditingController();
   List<Nominee> filteredNominees = [];
 
   String errorMessage = "";
   late Future myFuture;
+  Map results = {};
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     myFuture = getNominees();
+    getResults();
   }
 
   @override
@@ -57,6 +68,19 @@ class _NomineesState extends State<Nominees> {
     }
   }
 
+  Future getResults() async {
+    if (widget.event.showResult == true) {
+      try {
+        var _res = await _categoryRepository.getResults(widget.category.catId!);
+        setState(() {
+          results = _res;
+        });
+      } catch (e) {
+        'network error';
+      }
+    }
+  }
+
   searchNominee(String value) async {
     String text = value.toLowerCase();
     List<Nominee> allNominees = await getNominees();
@@ -66,6 +90,24 @@ class _NomineesState extends State<Nominees> {
         return nominee!.contains(text);
       }).toList();
     });
+  }
+
+  viewResults() {
+    if ((results['nominees'] as List).isNotEmpty) {
+      List<ResultsSeries> newList = [];
+      (results['nominees'] as List).forEach((element) {
+        ResultsSeries res = ResultsSeries(
+            name: element['nom_name'],
+            count: double.parse(element['vote_count']));
+        newList.add(res);
+      });
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (BuildContext context) =>
+                  ResultPage(results: newList, category: widget.category)));
+    }
   }
 
   @override
@@ -114,6 +156,17 @@ class _NomineesState extends State<Nominees> {
   Widget _body() {
     return SliverList(
         delegate: SliverChildListDelegate([
+      widget.event.showResult == true
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: TextButton(
+                style: TextButton.styleFrom(
+                    primary: Colors.white, backgroundColor: KColors.kDarkColor),
+                child: const Text('View Results'),
+                onPressed: viewResults,
+              ),
+            )
+          : const SizedBox.shrink(),
       FutureBuilder(
           future: myFuture,
           builder: (BuildContext context, AsyncSnapshot snapshot) {

@@ -31,4 +31,19 @@ class CategoryRepository {
       client.close();
     }
   }
+
+  Future<dynamic> getResults(String catID) async {
+    var headers = {"Content-Type": "application/json;charset=UTF-8"};
+
+    try {
+      dynamic res = await http.get(
+          Uri.parse('$url/voting_results?cat_id=$catID&customer_number='),
+          headers: headers);
+
+      dynamic res_body = jsonDecode(res.body);
+      return res_body[0];
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

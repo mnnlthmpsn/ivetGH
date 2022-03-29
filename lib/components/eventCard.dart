@@ -25,7 +25,17 @@ class EventCard extends StatelessWidget {
             style: TextStyle(fontSize: 12),
           ),
           leading: event.logo != null
-              ? Image.network(event.logo)
+              ? Container(
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(5),
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                alignment: Alignment.topCenter,
+                image:NetworkImage(event.logo)
+              )
+            ),
+          )
               : const Icon(
                   Icons.image,
                   size: 40,

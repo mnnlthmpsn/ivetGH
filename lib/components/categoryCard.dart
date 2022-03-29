@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:vetgh/models/category.dart';
+import 'package:vetgh/models/event.dart';
 import 'package:vetgh/screens/nominees.dart';
 
 class CategoryCard extends StatelessWidget {
 
   final Category category;
+  final Event event;
 
-  const CategoryCard({Key? key, required this.category}) : super(key: key);
+  const CategoryCard({Key? key, required this.event, required this.category}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
         onTap: (){
-          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => Nominees(category: category,)));
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => Nominees(category: category, event: event,)));
         },
         title: Text(category.category!,
             style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
