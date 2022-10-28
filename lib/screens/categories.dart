@@ -52,10 +52,10 @@ class _CategoriesState extends State<Categories> {
     } catch (e) {
       setState(() {
         if (e is SocketException) {
-          setState(() => errorMessage =
-              "Network error occurred. Please check your connectivity");
+          errorMessage =
+              "Network error occurred. Please check your connectivity";
         } else {
-          setState(() => errorMessage = e.toString());
+          errorMessage = e.toString();
         }
       });
       rethrow;
@@ -137,7 +137,7 @@ class _CategoriesState extends State<Categories> {
                             physics: const ScrollPhysics(),
                             itemBuilder: (BuildContext context, int i) {
                               return CategoryCard(
-                                event: widget.event,
+                                  event: widget.event,
                                   category: filteredCategories.isNotEmpty
                                       ? filteredCategories[i]
                                       : snapshot.data[i]);
